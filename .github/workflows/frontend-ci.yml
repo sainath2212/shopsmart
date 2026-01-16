@@ -7,11 +7,15 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build:
+  frontend:
     runs-on: ubuntu-latest
 
+    defaults:
+      run:
+        working-directory: client
+
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Setup Node.js
@@ -20,11 +24,7 @@ jobs:
           node-version: 18
 
       - name: Install dependencies
-        run: |
-          cd frontend
-          npm install
+        run: npm install
 
-      - name: Build frontend
-        run: |
-          cd frontend
-          npm run build
+      - name: Build frontend (Vite)
+        run: npm run build

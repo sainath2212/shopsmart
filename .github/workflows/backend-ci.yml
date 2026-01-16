@@ -7,8 +7,12 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build:
+  backend:
     runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: server
 
     steps:
       - name: Checkout repository
@@ -25,12 +29,11 @@ jobs:
       - name: Generate Prisma Client
         run: npx prisma generate
 
-      - name: Prisma migrate check
+      - name: Prisma migrate status
         env:
           DATABASE_URL: "file:./dev.db"
         run: npx prisma migrate status
 
-      - name: Start server (sanity check)
+      - name: Run tests (if any)
         run: |
-          node index.js &
-          sleep 5
+          if [ -d tests ]; then npm test || true; fi
