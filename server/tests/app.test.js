@@ -1,10 +1,9 @@
-const request = require('supertest');
-const app = require('../src/app');
+// Superseded – tests restructured into unit / integration / e2e layers.
+// See:
+//   tests/unit/health.unit.test.js
+//   tests/integration/api.integration.test.js
+//   tests/e2e/server.e2e.test.js
 
-describe('GET /api/health', () => {
-    it('should return 200 and status ok', async () => {
-        const res = await request(app).get('/api/health');
-        expect(res.statusCode).toEqual(200);
-        expect(res.body).toHaveProperty('status', 'ok');
-    });
+test('placeholder – tests moved to structured directories', () => {
+  expect(true).toBe(true);
 });
