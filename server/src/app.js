@@ -4,6 +4,9 @@ const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
 
 const { router: healthRouter } = require('./routes/health');
+const { router: productsRouter } = require('./routes/products');
+const { router: cartRouter } = require('./routes/cart');
+const { router: categoriesRouter } = require('./routes/categories');
 
 const app = express();
 
@@ -40,6 +43,9 @@ app.get('/api-docs.json', (req, res) => {
 
 // Routes
 app.use('/api', healthRouter);
+app.use('/api', productsRouter);
+app.use('/api', cartRouter);
+app.use('/api', categoriesRouter);
 
 /**
  * @swagger
