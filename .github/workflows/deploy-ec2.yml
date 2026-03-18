@@ -1,0 +1,66 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy to AWS EC2
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            set -euo pipefail
+
+            APP_DIR="/home/${{ secrets.EC2_USER }}/shopsmart"
+
+            # ── Ensure Node.js is available ──
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+
+            # ── Clone or pull latest code (idempotent) ──
+            if [ -d "$APP_DIR/.git" ]; then
+              echo "→ Pulling latest changes..."
+              cd "$APP_DIR"
+              git fetch --all
+              git reset --hard origin/main
+            else
+              echo "→ Cloning repository..."
+              mkdir -p "$APP_DIR"
+              git clone https://github.com/sainath2212/shopsmart.git "$APP_DIR"
+              cd "$APP_DIR"
+            fi
+
+            # ── Install backend dependencies (idempotent) ──
+            echo "→ Installing backend dependencies..."
+            cd "$APP_DIR/server"
+            npm ci --omit=dev
+
+            # ── Install frontend dependencies & build (idempotent) ──
+            echo "→ Building frontend..."
+            cd "$APP_DIR/client"
+            npm ci
+            npm run build
+
+            # ── Restart backend with PM2 (idempotent) ──
+            echo "→ Restarting backend service..."
+            cd "$APP_DIR/server"
+            npx pm2 delete shopsmart-backend 2>/dev/null || true
+            npx pm2 start src/index.js --name shopsmart-backend
+            npx pm2 save
+
+            # ── Health check ──
+            sleep 3
+            curl -f http://localhost:5001/api/health && echo "✅ Deployment successful!" || echo "⚠️  Health check failed"

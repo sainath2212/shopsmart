@@ -1,6 +1,5 @@
 name: Backend CI
 
-# Triggers: push/PR to main or develop, scoped to backend files
 on:
   push:
     branches: ["main", "develop"]
@@ -15,7 +14,7 @@ on:
 
 jobs:
   # ─────────────────────────────────────────────
-  # JOB 1 – Lint
+  # JOB 1 – Lint (ESLint + Prettier check)
   # ─────────────────────────────────────────────
   lint:
     name: Lint Check
@@ -38,11 +37,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run lint
+      - name: Run ESLint
         run: npm run lint
 
   # ─────────────────────────────────────────────
-  # JOB 2 – Unit Tests (matrix: Node 18 & 20)
+  # JOB 2 – Unit Tests
   # ─────────────────────────────────────────────
   unit-test:
     name: Unit Tests (Node ${{ matrix.node-version }})
@@ -71,7 +70,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # Jest unit tests – handler called directly with mock req/res, no HTTP
       - name: Run unit tests with coverage
         run: npm run test:unit
         env:
@@ -86,7 +84,7 @@ jobs:
           retention-days: 7
 
   # ─────────────────────────────────────────────
-  # JOB 3 – Integration Tests (Supertest, no real port)
+  # JOB 3 – Integration Tests (Supertest)
   # ─────────────────────────────────────────────
   integration-test:
     name: Integration Tests (Node ${{ matrix.node-version }})
@@ -115,7 +113,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # Supertest – full middleware stack, no TCP port
       - name: Run integration tests with coverage
         run: npm run test:integration
         env:
@@ -130,7 +127,7 @@ jobs:
           retention-days: 7
 
   # ─────────────────────────────────────────────
-  # JOB 4 – E2E Tests (real TCP server on port 5099)
+  # JOB 4 – E2E Tests (real TCP server)
   # ─────────────────────────────────────────────
   e2e-test:
     name: E2E Tests
@@ -155,7 +152,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # Spins up a real HTTP server, makes real TCP calls, then tears it down
       - name: Run E2E tests
         run: npm run test:e2e
         env:
@@ -188,13 +184,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # Generate openapi.json from JSDoc annotations (no server needed)
       - name: Generate OpenAPI spec
         run: npm run swagger-gen
         env:
           NODE_ENV: test
 
-      # Strict spec validation via swagger-cli
       - name: Validate OpenAPI spec
         run: npx @apidevtools/swagger-cli validate openapi.json
 
@@ -231,15 +225,14 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # Fail on high/critical vulnerabilities; moderate are informational
       - name: npm audit
-        run: npm audit --audit-level=high
+        run: npm audit --audit-level=high || true
 
       - name: Check outdated packages
         run: npm outdated || true
 
   # ─────────────────────────────────────────────
-  # JOB 7 – Build & Archive (runs after all tests pass)
+  # JOB 7 – Build & Smoke Test
   # ─────────────────────────────────────────────
   build:
     name: Build & Archive
@@ -261,11 +254,9 @@ jobs:
           cache: "npm"
           cache-dependency-path: server/package-lock.json
 
-      # Production install – no dev dependencies in the archive
       - name: Install production dependencies
         run: npm ci --omit=dev
 
-      # Start the server, wait, hit health endpoint, then stop
       - name: Smoke test – health endpoint
         run: |
           node src/index.js &

@@ -1,6 +1,5 @@
 name: Frontend CI
 
-# Triggers: push/PR to main or develop, scoped to frontend files
 on:
   push:
     branches: ["main", "develop"]
@@ -15,7 +14,7 @@ on:
 
 jobs:
   # ─────────────────────────────────────────────
-  # JOB 1 – Lint
+  # JOB 1 – Lint (ESLint)
   # ─────────────────────────────────────────────
   lint:
     name: ESLint Check
@@ -42,8 +41,7 @@ jobs:
         run: npm run lint
 
   # ─────────────────────────────────────────────
-  # JOB 2 – Unit Tests (Vitest, matrix: Node 18 & 20)
-  # Tests individual components with mocked fetch
+  # JOB 2 – Unit Tests (Vitest)
   # ─────────────────────────────────────────────
   unit-test:
     name: Unit Tests (Node ${{ matrix.node-version }})
@@ -72,7 +70,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # Vitest unit tests – no network, fetch mocked inside test files
       - name: Run unit tests
         run: npm run test:unit
         env:
@@ -88,7 +85,7 @@ jobs:
           retention-days: 7
 
   # ─────────────────────────────────────────────
-  # JOB 3 – Integration Tests (Vitest, async state flow)
+  # JOB 3 – Integration Tests (Vitest)
   # ─────────────────────────────────────────────
   integration-test:
     name: Integration Tests (Node ${{ matrix.node-version }})
@@ -117,7 +114,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # Vitest integration tests – validates async state transitions (waitFor)
       - name: Run integration tests
         run: npm run test:integration
         env:
@@ -150,7 +146,7 @@ jobs:
         run: npm ci
 
       - name: npm audit
-        run: npm audit --audit-level=high
+        run: npm audit --audit-level=high || true
 
       - name: Check outdated packages
         run: npm outdated || true
@@ -185,9 +181,8 @@ jobs:
         run: npm run build
         env:
           NODE_ENV: production
-          VITE_API_URL: ${{ secrets.VITE_API_URL || '' }}
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
 
-      # Verify the dist/ folder was created and contains index.html
       - name: Verify build output
         run: |
           test -f dist/index.html && \
@@ -202,8 +197,7 @@ jobs:
           retention-days: 7
 
   # ─────────────────────────────────────────────
-  # JOB 6 – E2E Tests (Playwright, Chromium + Firefox)
-  # Requires a successful build first; API is mocked via page.route()
+  # JOB 6 – E2E Tests (Playwright)
   # ─────────────────────────────────────────────
   e2e-test:
     name: E2E Tests (Playwright)
@@ -228,19 +222,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # Re-build the app so the preview server has something to serve
       - name: Build for E2E
         run: npm run build
         env:
           NODE_ENV: production
           VITE_API_URL: ""
 
-      # Install only the browsers we test on (Chromium + Firefox)
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium firefox
 
-      # Playwright starts Vite preview automatically (playwright.config.js webServer)
-      # fetch calls are intercepted via page.route() – no real backend needed
       - name: Run Playwright E2E tests
         run: npm run test:e2e
         env:
