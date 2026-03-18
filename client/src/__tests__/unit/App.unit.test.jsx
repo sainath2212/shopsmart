@@ -1,50 +1,103 @@
 /**
- * UNIT TESTS – App component (Vitest + Testing Library)
- *
- * fetch is mocked so no real network call is made.
- * Tests focus on rendering and what the user sees in isolation.
+ * UNIT TESTS – Individual component rendering
+ * Tests components in isolation with mocked fetch
  */
 
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import App from '../../App';
 
-// ─── Global fetch mock ───────────────────────────────────────────────────────
-const mockHealthResponse = {
-    status: 'ok',
-    message: 'ShopSmart Backend is running',
-    timestamp: '2024-01-01T00:00:00.000Z',
-};
-
+// Mock fetch globally
 beforeEach(() => {
-    global.fetch = vi.fn(() =>
-        Promise.resolve({
-            json: () => Promise.resolve(mockHealthResponse),
-        })
-    );
+  global.fetch = vi.fn((url) => {
+    if (url.includes('/api/products')) {
+      return Promise.resolve({
+        json: () => Promise.resolve({
+          products: [
+            {
+              id: 1, name: 'Wireless Headphones', description: 'Premium noise-cancelling', price: 249.99,
+              category: 'electronics', image: 'https://example.com/img.jpg', rating: 4.8, reviews: 1247, inStock: true, badge: 'Best Seller',
+            },
+            {
+              id: 2, name: 'Leather Watch', description: 'Handcrafted genuine leather', price: 189.00,
+              category: 'accessories', image: 'https://example.com/img2.jpg', rating: 4.6, reviews: 834, inStock: true, badge: 'New',
+            },
+          ],
+          total: 2,
+        }),
+      });
+    }
+    if (url.includes('/api/categories')) {
+      return Promise.resolve({
+        json: () => Promise.resolve({
+          categories: [
+            { id: 'electronics', name: 'Electronics', icon: '🔌', description: 'Gadgets' },
+            { id: 'accessories', name: 'Accessories', icon: '⌚', description: 'Watches' },
+          ],
+        }),
+      });
+    }
+    if (url.includes('/api/cart')) {
+      return Promise.resolve({
+        json: () => Promise.resolve({ items: [], itemCount: 0, subtotal: 0 }),
+      });
+    }
+    return Promise.resolve({ json: () => Promise.resolve({}) });
+  });
 });
-// ────────────────────────────────────────────────────────────────────────────
 
-describe('[Unit] App – static rendering', () => {
-    it('renders the ShopSmart heading', () => {
-        render(<App />);
-        expect(screen.getByRole('heading', { name: /ShopSmart/i })).toBeInTheDocument();
-    });
+describe('[Unit] Navbar', () => {
+  it('renders ShopSmart branding', () => {
+    render(<App />);
+    expect(screen.getByText('Smart')).toBeInTheDocument();
+  });
 
-    it('renders the "Backend Status" subheading', () => {
-        render(<App />);
-        // getByRole scopes to headings only — avoids matching the loading paragraph
-        expect(screen.getByRole('heading', { name: /Backend Status/i })).toBeInTheDocument();
-    });
+  it('renders cart button with icon', () => {
+    render(<App />);
+    expect(screen.getByLabelText(/Open cart/i)).toBeInTheDocument();
+  });
+});
 
-    it('shows loading text before data resolves', () => {
-        // Freeze fetch so it never resolves
-        global.fetch = vi.fn(() => new Promise(() => { }));
-        render(<App />);
-        expect(screen.getByText(/Loading backend status/i)).toBeInTheDocument();
-    });
+describe('[Unit] Hero Section', () => {
+  it('renders hero heading', () => {
+    render(<App />);
+    const hero = document.getElementById('hero');
+    expect(hero).not.toBeNull();
+  });
 
-    it('does not crash on render', () => {
-        expect(() => render(<App />)).not.toThrow();
-    });
+  it('renders hero subtext', () => {
+    render(<App />);
+    expect(screen.getByText(/Curated collection/i)).toBeInTheDocument();
+  });
+});
+
+describe('[Unit] Search & Filter', () => {
+  it('renders search input', () => {
+    render(<App />);
+    expect(screen.getByPlaceholderText(/Search products/i)).toBeInTheDocument();
+  });
+
+  it('renders sort dropdown', () => {
+    render(<App />);
+    expect(screen.getByLabelText(/Sort products/i)).toBeInTheDocument();
+  });
+
+  it('renders "All" category chip', () => {
+    render(<App />);
+    const allChip = document.getElementById('category-all');
+    expect(allChip).not.toBeNull();
+  });
+});
+
+describe('[Unit] Footer', () => {
+  it('renders footer with copyright', () => {
+    render(<App />);
+    expect(screen.getByText(/© 2026 ShopSmart/i)).toBeInTheDocument();
+  });
+
+  it('renders footer element', () => {
+    render(<App />);
+    const footer = document.getElementById('footer');
+    expect(footer).not.toBeNull();
+  });
 });

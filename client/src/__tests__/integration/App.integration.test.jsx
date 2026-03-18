@@ -1,73 +1,129 @@
 /**
- * INTEGRATION TESTS – App component (Vitest + Testing Library)
- *
- * Tests the full async data flow: fetch resolves → component re-renders →
- * user sees the backend status. Focus is on component behaviour across
- * state transitions, not just initial render.
+ * INTEGRATION TESTS – Async state transitions
+ * Validates that fetched data renders correctly using waitFor
  */
 
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import App from '../../App';
 
-const mockHealthOk = {
-    status: 'ok',
-    message: 'ShopSmart Backend is running',
-    timestamp: '2024-01-01T00:00:00.000Z',
-};
+const mockProducts = [
+  {
+    id: 1, name: 'Wireless Headphones', description: 'Premium noise-cancelling', price: 249.99,
+    category: 'electronics', image: 'https://example.com/img.jpg', rating: 4.8, reviews: 1247, inStock: true, badge: 'Best Seller',
+  },
+  {
+    id: 2, name: 'Leather Watch', description: 'Handcrafted genuine leather', price: 189.00,
+    category: 'accessories', image: 'https://example.com/img2.jpg', rating: 4.6, reviews: 834, inStock: true, badge: 'New',
+  },
+];
 
 beforeEach(() => {
-    global.fetch = vi.fn(() =>
-        Promise.resolve({ json: () => Promise.resolve(mockHealthOk) })
-    );
+  global.fetch = vi.fn((url) => {
+    if (url.includes('/api/products')) {
+      return Promise.resolve({
+        json: () => Promise.resolve({ products: mockProducts, total: mockProducts.length }),
+      });
+    }
+    if (url.includes('/api/categories')) {
+      return Promise.resolve({
+        json: () => Promise.resolve({
+          categories: [
+            { id: 'electronics', name: 'Electronics', icon: '🔌', description: 'Gadgets' },
+            { id: 'accessories', name: 'Accessories', icon: '⌚', description: 'Watches' },
+          ],
+        }),
+      });
+    }
+    if (url.includes('/api/cart')) {
+      return Promise.resolve({
+        json: () => Promise.resolve({ items: [], itemCount: 0, subtotal: 0 }),
+      });
+    }
+    return Promise.resolve({ json: () => Promise.resolve({}) });
+  });
 });
 
-describe('[Integration] App – async data flow', () => {
-    it('shows loading state initially, then status after fetch resolves', async () => {
-        render(<App />);
-        // Loading state visible before fetch resolves
-        expect(screen.getByText(/Loading backend status/i)).toBeInTheDocument();
+describe('[Integration] Product Rendering', () => {
+  it('renders products after API data loads', async () => {
+    render(<App />);
+    await waitFor(() => {
+      expect(screen.getByText('Wireless Headphones')).toBeInTheDocument();
+    });
+  });
 
-        // After fetch resolves, status field appears
-        await waitFor(() =>
-            expect(screen.getByText(/ok/i)).toBeInTheDocument()
-        );
+  it('renders product cards with correct IDs', async () => {
+    render(<App />);
+    await waitFor(() => {
+      expect(document.getElementById('product-1')).not.toBeNull();
+      expect(document.getElementById('product-2')).not.toBeNull();
+    });
+  });
+
+  it('renders product prices', async () => {
+    render(<App />);
+    await waitFor(() => {
+      expect(screen.getByText('249.99')).toBeInTheDocument();
+    });
+  });
+
+  it('renders product badges', async () => {
+    render(<App />);
+    await waitFor(() => {
+      expect(screen.getByText('Best Seller')).toBeInTheDocument();
+    });
+  });
+});
+
+describe('[Integration] Category Filtering', () => {
+  it('renders category chips after API data loads', async () => {
+    render(<App />);
+    await waitFor(() => {
+      expect(document.getElementById('category-electronics')).not.toBeNull();
+    });
+  });
+
+  it('clicking a category chip triggers new fetch', async () => {
+    render(<App />);
+    await waitFor(() => {
+      expect(document.getElementById('category-electronics')).not.toBeNull();
     });
 
-    it('displays the message returned by the backend', async () => {
-        render(<App />);
-        await waitFor(() =>
-            expect(screen.getByText(/ShopSmart Backend is running/i)).toBeInTheDocument()
-        );
+    fireEvent.click(document.getElementById('category-electronics'));
+
+    await waitFor(() => {
+      const calls = global.fetch.mock.calls.filter((c) => c[0].includes('/api/products'));
+      expect(calls.length).toBeGreaterThanOrEqual(2);
+    });
+  });
+});
+
+describe('[Integration] Search', () => {
+  it('typing in search triggers new fetch', async () => {
+    render(<App />);
+    const searchInput = screen.getByPlaceholderText(/Search products/i);
+
+    fireEvent.change(searchInput, { target: { value: 'headphones' } });
+
+    await waitFor(() => {
+      const calls = global.fetch.mock.calls.filter((c) => c[0].includes('search=headphones'));
+      expect(calls.length).toBeGreaterThanOrEqual(1);
+    });
+  });
+});
+
+describe('[Integration] Cart Interaction', () => {
+  it('clicking cart button opens the cart drawer', async () => {
+    render(<App />);
+
+    await waitFor(() => {
+      expect(screen.getByLabelText(/Open cart/i)).toBeInTheDocument();
     });
 
-    it('displays the timestamp returned by the backend', async () => {
-        render(<App />);
-        await waitFor(() =>
-            expect(screen.getByText(/2024-01-01/i)).toBeInTheDocument()
-        );
-    });
+    fireEvent.click(screen.getByLabelText(/Open cart/i));
 
-    it('calls fetch exactly once on mount', async () => {
-        render(<App />);
-        await waitFor(() => screen.getByText(/ok/i));
-        expect(global.fetch).toHaveBeenCalledTimes(1);
+    await waitFor(() => {
+      expect(screen.getByText(/Your cart is empty/i)).toBeInTheDocument();
     });
-
-    it('calls the /api/health endpoint', async () => {
-        render(<App />);
-        await waitFor(() => screen.getByText(/ok/i));
-        expect(global.fetch).toHaveBeenCalledWith(
-            expect.stringContaining('/api/health')
-        );
-    });
-
-    it('gracefully handles a fetch error (no crash)', async () => {
-        global.fetch = vi.fn(() => Promise.reject(new Error('Network error')));
-        expect(() => render(<App />)).not.toThrow();
-        // Loading text stays since data never arrives
-        await waitFor(() =>
-            expect(screen.getByText(/Loading backend status/i)).toBeInTheDocument()
-        );
-    });
+  });
 });
