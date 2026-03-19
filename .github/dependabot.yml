@@ -33,6 +33,11 @@ updates:
       prefix: "chore(deps)"
     reviewers:
       - "sainath2212"
+    groups:
+      vitest:
+        patterns:
+          - "vitest"
+          - "@vitest/*"
 
   # ── GitHub Actions ──
   - package-ecosystem: "github-actions"
