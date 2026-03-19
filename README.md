@@ -3,7 +3,7 @@
 [![Backend CI](https://github.com/sainath2212/shopsmart/actions/workflows/backend-ci.yml/badge.svg)](https://github.com/sainath2212/shopsmart/actions/workflows/backend-ci.yml)
 [![Frontend CI](https://github.com/sainath2212/shopsmart/actions/workflows/frontend-ci.yml/badge.svg)](https://github.com/sainath2212/shopsmart/actions/workflows/frontend-ci.yml)
 
-A modern, full-stack e-commerce platform built with React and Express.js, featuring a comprehensive CI/CD pipeline, multi-tier testing strategy, and automated deployment to AWS EC2.
+A modern, full-stack e-commerce platform built with React and Express.js, featuring a comprehensive CI/CD pipeline, multi-tier testing strategy, and automated deployment to AWS EC2 .
 
 ---
 
