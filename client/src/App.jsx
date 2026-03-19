@@ -10,13 +10,24 @@ function Navbar({ cartCount, onCartClick }) {
       <div className="navbar-inner">
         <div className="navbar-brand">
           <span className="logo-icon">🛍️</span>
-          <span>Shop<span className="brand-accent">Smart</span></span>
+          <span>
+            Shop<span className="brand-accent">Smart</span>
+          </span>
         </div>
         <div className="navbar-actions">
-          <button className="cart-btn" onClick={onCartClick} id="cart-button" aria-label="Open cart">
+          <button
+            className="cart-btn"
+            onClick={onCartClick}
+            id="cart-button"
+            aria-label="Open cart"
+          >
             <span className="cart-icon">🛒</span>
             <span>Cart</span>
-            {cartCount > 0 && <span className="cart-badge" id="cart-count">{cartCount}</span>}
+            {cartCount > 0 && (
+              <span className="cart-badge" id="cart-count">
+                {cartCount}
+              </span>
+            )}
           </button>
         </div>
       </div>
@@ -30,8 +41,8 @@ function ProductCard({ product, onAddToCart }) {
     if (!badge) return '';
     const map = {
       'Best Seller': 'badge-best-seller',
-      'New': 'badge-new',
-      'Popular': 'badge-popular',
+      New: 'badge-new',
+      Popular: 'badge-popular',
       'Top Rated': 'badge-top-rated',
       'Sold Out': 'badge-sold-out',
     };
@@ -49,9 +60,7 @@ function ProductCard({ product, onAddToCart }) {
       <div className="product-card-image">
         <img src={product.image} alt={product.name} loading="lazy" />
         {product.badge && (
-          <span className={`product-badge ${getBadgeClass(product.badge)}`}>
-            {product.badge}
-          </span>
+          <span className={`product-badge ${getBadgeClass(product.badge)}`}>{product.badge}</span>
         )}
       </div>
       <div className="product-card-body">
@@ -65,7 +74,8 @@ function ProductCard({ product, onAddToCart }) {
         </div>
         <div className="product-card-footer">
           <span className="product-price">
-            <span className="currency">$</span>{product.price.toFixed(2)}
+            <span className="currency">$</span>
+            {product.price.toFixed(2)}
           </span>
           <button
             className="add-to-cart-btn"
@@ -105,10 +115,22 @@ function CartDrawer({ isOpen, onClose, cart, onUpdate, onRemove, onClear }) {
   return (
     <>
       <div className={`cart-overlay ${isOpen ? 'open' : ''}`} onClick={onClose} id="cart-overlay" />
-      <div className={`cart-drawer ${isOpen ? 'open' : ''}`} id="cart-drawer" role="dialog" aria-label="Shopping cart">
+      <div
+        className={`cart-drawer ${isOpen ? 'open' : ''}`}
+        id="cart-drawer"
+        role="dialog"
+        aria-label="Shopping cart"
+      >
         <div className="cart-header">
           <h2>🛒 Cart ({itemCount})</h2>
-          <button className="close-cart-btn" onClick={onClose} id="close-cart" aria-label="Close cart">✕</button>
+          <button
+            className="close-cart-btn"
+            onClick={onClose}
+            id="close-cart"
+            aria-label="Close cart"
+          >
+            ✕
+          </button>
         </div>
 
         <div className="cart-items">
@@ -131,20 +153,26 @@ function CartDrawer({ isOpen, onClose, cart, onUpdate, onRemove, onClear }) {
                       className="qty-btn"
                       onClick={() => onUpdate(item.productId, item.quantity - 1)}
                       aria-label="Decrease quantity"
-                    >−</button>
+                    >
+                      −
+                    </button>
                     <span className="qty-value">{item.quantity}</span>
                     <button
                       className="qty-btn"
                       onClick={() => onUpdate(item.productId, item.quantity + 1)}
                       aria-label="Increase quantity"
-                    >+</button>
+                    >
+                      +
+                    </button>
                   </div>
                 </div>
                 <button
                   className="remove-item-btn"
                   onClick={() => onRemove(item.productId)}
                   aria-label={`Remove ${item.name} from cart`}
-                >🗑️</button>
+                >
+                  🗑️
+                </button>
               </div>
             ))
           )}
@@ -156,8 +184,12 @@ function CartDrawer({ isOpen, onClose, cart, onUpdate, onRemove, onClear }) {
               <span>Subtotal</span>
               <span className="total-price">${subtotal.toFixed(2)}</span>
             </div>
-            <button className="checkout-btn" id="checkout-btn">Proceed to Checkout</button>
-            <button className="clear-cart-btn" onClick={onClear} id="clear-cart">Clear Cart</button>
+            <button className="checkout-btn" id="checkout-btn">
+              Proceed to Checkout
+            </button>
+            <button className="clear-cart-btn" onClick={onClear} id="clear-cart">
+              Clear Cart
+            </button>
           </div>
         )}
       </div>
@@ -231,8 +263,12 @@ function App() {
     }
   }, []);
 
-  useEffect(() => { fetchProducts(); }, [fetchProducts]);
-  useEffect(() => { fetchCart(); }, [fetchCart]);
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
+  useEffect(() => {
+    fetchCart();
+  }, [fetchCart]);
 
   // ─── Toast Helper ──────────────────────────────────────────────────────
   const showToast = (message) => {
@@ -375,13 +411,8 @@ function App() {
           {loading
             ? Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)
             : products.map((product) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                onAddToCart={addToCart}
-              />
-            ))
-          }
+                <ProductCard key={product.id} product={product} onAddToCart={addToCart} />
+              ))}
         </div>
       </section>
 
@@ -403,7 +434,9 @@ function App() {
         <div className="footer-links">
           <a href="#hero">Home</a>
           <a href="#products">Products</a>
-          <a href="/api-docs" target="_blank" rel="noopener noreferrer">API Docs</a>
+          <a href="/api-docs" target="_blank" rel="noopener noreferrer">
+            API Docs
+          </a>
         </div>
         <p>© 2026 ShopSmart. All rights reserved.</p>
       </footer>

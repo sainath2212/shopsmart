@@ -23,9 +23,7 @@ const swaggerOptions = {
       version: '1.0.0',
       description: 'OpenAPI documentation for the ShopSmart backend',
     },
-    servers: [
-      { url: 'http://localhost:5001', description: 'Local development' },
-    ],
+    servers: [{ url: 'http://localhost:5001', description: 'Local development' }],
   },
   apis: ['./src/routes/*.js'],
 };

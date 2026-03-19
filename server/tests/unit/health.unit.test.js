@@ -6,8 +6,8 @@
  */
 
 const { healthHandler } = require('../../src/routes/health');
-const { mockRequest }   = require('../mocks/mockRequest');
-const { mockResponse }  = require('../mocks/mockResponse');
+const { mockRequest } = require('../mocks/mockRequest');
+const { mockResponse } = require('../mocks/mockResponse');
 
 describe('[Unit] healthHandler', () => {
   let req, res;

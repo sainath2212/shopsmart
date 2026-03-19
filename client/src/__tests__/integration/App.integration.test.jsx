@@ -9,12 +9,28 @@ import App from '../../App';
 
 const mockProducts = [
   {
-    id: 1, name: 'Wireless Headphones', description: 'Premium noise-cancelling', price: 249.99,
-    category: 'electronics', image: 'https://example.com/img.jpg', rating: 4.8, reviews: 1247, inStock: true, badge: 'Best Seller',
+    id: 1,
+    name: 'Wireless Headphones',
+    description: 'Premium noise-cancelling',
+    price: 249.99,
+    category: 'electronics',
+    image: 'https://example.com/img.jpg',
+    rating: 4.8,
+    reviews: 1247,
+    inStock: true,
+    badge: 'Best Seller',
   },
   {
-    id: 2, name: 'Leather Watch', description: 'Handcrafted genuine leather', price: 189.00,
-    category: 'accessories', image: 'https://example.com/img2.jpg', rating: 4.6, reviews: 834, inStock: true, badge: 'New',
+    id: 2,
+    name: 'Leather Watch',
+    description: 'Handcrafted genuine leather',
+    price: 189.0,
+    category: 'accessories',
+    image: 'https://example.com/img2.jpg',
+    rating: 4.6,
+    reviews: 834,
+    inStock: true,
+    badge: 'New',
   },
 ];
 
@@ -27,12 +43,13 @@ beforeEach(() => {
     }
     if (url.includes('/api/categories')) {
       return Promise.resolve({
-        json: () => Promise.resolve({
-          categories: [
-            { id: 'electronics', name: 'Electronics', icon: '🔌', description: 'Gadgets' },
-            { id: 'accessories', name: 'Accessories', icon: '⌚', description: 'Watches' },
-          ],
-        }),
+        json: () =>
+          Promise.resolve({
+            categories: [
+              { id: 'electronics', name: 'Electronics', icon: '🔌', description: 'Gadgets' },
+              { id: 'accessories', name: 'Accessories', icon: '⌚', description: 'Watches' },
+            ],
+          }),
       });
     }
     if (url.includes('/api/cart')) {

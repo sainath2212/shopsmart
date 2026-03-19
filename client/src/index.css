@@ -53,7 +53,11 @@
   --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
 
   /* Typography */
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family:
+    'Inter',
+    system-ui,
+    -apple-system,
+    sans-serif;
   line-height: 1.6;
   font-weight: 400;
   color-scheme: dark;
@@ -188,9 +192,15 @@ a:hover {
 }
 
 @keyframes badgePop {
-  0% { transform: scale(0.5); }
-  50% { transform: scale(1.2); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(0.5);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 /* ─── Hero Section ──────────────────────────────────────────────────────── */
@@ -658,8 +668,14 @@ a:hover {
 }
 
 @keyframes slideIn {
-  from { opacity: 0; transform: translateX(20px); }
-  to { opacity: 1; transform: translateX(0); }
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .cart-item-image {
@@ -833,17 +849,31 @@ a:hover {
   font-size: 0.85rem;
   font-weight: 500;
   box-shadow: var(--shadow-lg);
-  animation: toastIn 0.3s ease, toastOut 0.3s ease 2.5s forwards;
+  animation:
+    toastIn 0.3s ease,
+    toastOut 0.3s ease 2.5s forwards;
 }
 
 @keyframes toastIn {
-  from { opacity: 0; transform: translateX(100px); }
-  to { opacity: 1; transform: translateX(0); }
+  from {
+    opacity: 0;
+    transform: translateX(100px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 @keyframes toastOut {
-  from { opacity: 1; transform: translateX(0); }
-  to { opacity: 0; transform: translateX(100px); }
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(100px);
+  }
 }
 
 .toast .toast-icon {
@@ -852,15 +882,24 @@ a:hover {
 
 /* ─── Loading Skeleton ──────────────────────────────────────────────────── */
 .skeleton {
-  background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-card-hover) 50%, var(--bg-card) 75%);
+  background: linear-gradient(
+    90deg,
+    var(--bg-card) 25%,
+    var(--bg-card-hover) 50%,
+    var(--bg-card) 75%
+  );
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
   border-radius: var(--radius-sm);
 }
 
 @keyframes shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 .skeleton-card {
@@ -922,23 +961,42 @@ a:hover {
 
 /* ─── Responsive ────────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
-  .navbar { padding: 0 1rem; }
-  .hero { padding: 2.5rem 1rem; }
-  .hero p { font-size: 1rem; }
-  .categories-bar { padding: 0 1rem 1rem; }
-  .toolbar { padding: 0.75rem 1rem; }
-  .products-section { padding: 0.75rem 1rem 3rem; }
+  .navbar {
+    padding: 0 1rem;
+  }
+  .hero {
+    padding: 2.5rem 1rem;
+  }
+  .hero p {
+    font-size: 1rem;
+  }
+  .categories-bar {
+    padding: 0 1rem 1rem;
+  }
+  .toolbar {
+    padding: 0.75rem 1rem;
+  }
+  .products-section {
+    padding: 0.75rem 1rem 3rem;
+  }
 
   .product-grid {
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
     gap: 1rem;
   }
 
-  .cart-drawer { width: 100vw; }
+  .cart-drawer {
+    width: 100vw;
+  }
 
-  .product-card-image { height: 180px; }
+  .product-card-image {
+    height: 180px;
+  }
 
-  .search-box { max-width: 100%; flex: 1; }
+  .search-box {
+    max-width: 100%;
+    flex: 1;
+  }
 
   .toast-container {
     left: 1rem;
@@ -953,10 +1011,23 @@ a:hover {
     gap: 0.75rem;
   }
 
-  .product-card-image { height: 140px; }
-  .product-card-body { padding: 0.75rem; }
-  .product-card-body h3 { font-size: 0.85rem; }
-  .product-description { display: none; }
-  .product-price { font-size: 1.1rem; }
-  .add-to-cart-btn { padding: 0.5rem 0.75rem; font-size: 0.75rem; }
+  .product-card-image {
+    height: 140px;
+  }
+  .product-card-body {
+    padding: 0.75rem;
+  }
+  .product-card-body h3 {
+    font-size: 0.85rem;
+  }
+  .product-description {
+    display: none;
+  }
+  .product-price {
+    font-size: 1.1rem;
+  }
+  .add-to-cart-btn {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.75rem;
+  }
 }

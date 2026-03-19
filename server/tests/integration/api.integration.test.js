@@ -112,9 +112,7 @@ describe('[Integration] Cart API', () => {
   });
 
   it('DELETE /api/cart/:id removes item', async () => {
-    await request(app)
-      .post('/api/cart')
-      .send({ productId: 1, name: 'Test', price: 10 });
+    await request(app).post('/api/cart').send({ productId: 1, name: 'Test', price: 10 });
 
     const res = await request(app).delete('/api/cart/1');
     expect(res.statusCode).toBe(200);
@@ -122,12 +120,8 @@ describe('[Integration] Cart API', () => {
   });
 
   it('DELETE /api/cart clears all items', async () => {
-    await request(app)
-      .post('/api/cart')
-      .send({ productId: 1, name: 'Test', price: 10 });
-    await request(app)
-      .post('/api/cart')
-      .send({ productId: 2, name: 'Test2', price: 20 });
+    await request(app).post('/api/cart').send({ productId: 1, name: 'Test', price: 10 });
+    await request(app).post('/api/cart').send({ productId: 2, name: 'Test2', price: 20 });
 
     const res = await request(app).delete('/api/cart');
     expect(res.statusCode).toBe(200);

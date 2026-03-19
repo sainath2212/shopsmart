@@ -8,21 +8,34 @@ describe('App', () => {
     global.fetch = vi.fn((url) => {
       if (url.includes('/api/products')) {
         return Promise.resolve({
-          json: () => Promise.resolve({
-            products: [
-              { id: 1, name: 'Test Product', description: 'A test item', price: 29.99, category: 'electronics', image: '', rating: 4.5, reviews: 100, inStock: true, badge: null }
-            ],
-            total: 1,
-          }),
+          json: () =>
+            Promise.resolve({
+              products: [
+                {
+                  id: 1,
+                  name: 'Test Product',
+                  description: 'A test item',
+                  price: 29.99,
+                  category: 'electronics',
+                  image: '',
+                  rating: 4.5,
+                  reviews: 100,
+                  inStock: true,
+                  badge: null,
+                },
+              ],
+              total: 1,
+            }),
         });
       }
       if (url.includes('/api/categories')) {
         return Promise.resolve({
-          json: () => Promise.resolve({
-            categories: [
-              { id: 'electronics', name: 'Electronics', icon: '🔌', description: 'Gadgets' }
-            ],
-          }),
+          json: () =>
+            Promise.resolve({
+              categories: [
+                { id: 'electronics', name: 'Electronics', icon: '🔌', description: 'Gadgets' },
+              ],
+            }),
         });
       }
       if (url.includes('/api/cart')) {

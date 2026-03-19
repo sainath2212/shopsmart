@@ -5,7 +5,11 @@
  * No Express app, no HTTP server – pure function-level isolation.
  */
 
-const { getProductsHandler, getProductByIdHandler, products } = require('../../src/routes/products');
+const {
+  getProductsHandler,
+  getProductByIdHandler,
+  products,
+} = require('../../src/routes/products');
 const { mockRequest } = require('../mocks/mockRequest');
 const { mockResponse } = require('../mocks/mockResponse');
 

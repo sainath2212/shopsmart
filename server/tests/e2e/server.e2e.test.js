@@ -124,7 +124,12 @@ describe('[E2E] Categories endpoint over real TCP', () => {
 describe('[E2E] Cart full flow over real TCP', () => {
   it('add → get → update → remove', async () => {
     // Add item
-    const addRes = await post('/api/cart', { productId: 1, name: 'E2E Item', price: 49.99, quantity: 2 });
+    const addRes = await post('/api/cart', {
+      productId: 1,
+      name: 'E2E Item',
+      price: 49.99,
+      quantity: 2,
+    });
     expect(addRes.status).toBe(201);
 
     // Get cart

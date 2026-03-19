@@ -7,7 +7,8 @@ const products = [
   {
     id: 1,
     name: 'Wireless Noise-Cancelling Headphones',
-    description: 'Premium over-ear headphones with active noise cancellation, 30hr battery life, and Hi-Res audio support.',
+    description:
+      'Premium over-ear headphones with active noise cancellation, 30hr battery life, and Hi-Res audio support.',
     price: 249.99,
     category: 'electronics',
     image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400',
@@ -19,8 +20,9 @@ const products = [
   {
     id: 2,
     name: 'Minimalist Leather Watch',
-    description: 'Handcrafted genuine leather strap with sapphire crystal glass. Water resistant to 50m.',
-    price: 189.00,
+    description:
+      'Handcrafted genuine leather strap with sapphire crystal glass. Water resistant to 50m.',
+    price: 189.0,
     category: 'accessories',
     image: 'https://images.unsplash.com/photo-1524592094714-0f0654e20314?w=400',
     rating: 4.6,
@@ -31,7 +33,8 @@ const products = [
   {
     id: 3,
     name: 'Organic Cotton Hoodie',
-    description: '100% GOTS-certified organic cotton. Relaxed fit with kangaroo pocket. Available in 8 colors.',
+    description:
+      '100% GOTS-certified organic cotton. Relaxed fit with kangaroo pocket. Available in 8 colors.',
     price: 79.99,
     category: 'clothing',
     image: 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=400',
@@ -43,7 +46,8 @@ const products = [
   {
     id: 4,
     name: 'Smart Home Speaker',
-    description: 'Voice-controlled speaker with premium 360° sound, smart home hub, and multi-room audio support.',
+    description:
+      'Voice-controlled speaker with premium 360° sound, smart home hub, and multi-room audio support.',
     price: 129.99,
     category: 'electronics',
     image: 'https://images.unsplash.com/photo-1543512214-318c7553f230?w=400',
@@ -55,7 +59,8 @@ const products = [
   {
     id: 5,
     name: 'Running Sneakers Pro',
-    description: 'Ultra-lightweight with responsive foam cushioning. Breathable mesh upper for maximum comfort.',
+    description:
+      'Ultra-lightweight with responsive foam cushioning. Breathable mesh upper for maximum comfort.',
     price: 159.99,
     category: 'clothing',
     image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400',
@@ -67,7 +72,8 @@ const products = [
   {
     id: 6,
     name: 'Stainless Steel Water Bottle',
-    description: 'Triple-wall vacuum insulated. Keeps drinks cold 24hrs or hot 12hrs. BPA-free, 750ml capacity.',
+    description:
+      'Triple-wall vacuum insulated. Keeps drinks cold 24hrs or hot 12hrs. BPA-free, 750ml capacity.',
     price: 34.99,
     category: 'accessories',
     image: 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=400',
@@ -79,7 +85,8 @@ const products = [
   {
     id: 7,
     name: 'Mechanical Keyboard RGB',
-    description: 'Cherry MX Brown switches, per-key RGB backlighting, aluminum frame. N-key rollover.',
+    description:
+      'Cherry MX Brown switches, per-key RGB backlighting, aluminum frame. N-key rollover.',
     price: 149.99,
     category: 'electronics',
     image: 'https://images.unsplash.com/photo-1618384887929-16ec33fab9ef?w=400',
@@ -91,7 +98,8 @@ const products = [
   {
     id: 8,
     name: 'Canvas Backpack',
-    description: 'Waxed canvas with leather trim. Padded 15" laptop compartment. Water-resistant coating.',
+    description:
+      'Waxed canvas with leather trim. Padded 15" laptop compartment. Water-resistant coating.',
     price: 99.99,
     category: 'accessories',
     image: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400',

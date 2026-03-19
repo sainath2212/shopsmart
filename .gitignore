@@ -5,3 +5,6 @@ dist
 build
 coverage
 .vercel
+server/openapi.json
+client/playwright-report/
+client/test-results/

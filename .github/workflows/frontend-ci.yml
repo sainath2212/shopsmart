@@ -40,6 +40,9 @@ jobs:
       - name: Run ESLint
         run: npm run lint
 
+      - name: Run Prettier Check
+        run: npm run format:check
+
   # ─────────────────────────────────────────────
   # JOB 2 – Unit Tests (Vitest)
   # ─────────────────────────────────────────────

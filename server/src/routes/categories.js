@@ -4,7 +4,12 @@ const router = express.Router();
 
 // ─── Categories ─────────────────────────────────────────────────────────────
 const categories = [
-  { id: 'electronics', name: 'Electronics', icon: '🔌', description: 'Gadgets, audio, and smart devices' },
+  {
+    id: 'electronics',
+    name: 'Electronics',
+    icon: '🔌',
+    description: 'Gadgets, audio, and smart devices',
+  },
   { id: 'clothing', name: 'Clothing', icon: '👕', description: 'Apparel, shoes, and activewear' },
   { id: 'accessories', name: 'Accessories', icon: '⌚', description: 'Watches, bags, and more' },
 ];

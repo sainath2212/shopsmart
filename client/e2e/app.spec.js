@@ -10,14 +10,28 @@ import { test, expect } from '@playwright/test';
 
 const mockProducts = [
   {
-    id: 1, name: 'Wireless Headphones', description: 'Premium noise-cancelling', price: 249.99,
-    category: 'electronics', image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400',
-    rating: 4.8, reviews: 1247, inStock: true, badge: 'Best Seller',
+    id: 1,
+    name: 'Wireless Headphones',
+    description: 'Premium noise-cancelling',
+    price: 249.99,
+    category: 'electronics',
+    image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400',
+    rating: 4.8,
+    reviews: 1247,
+    inStock: true,
+    badge: 'Best Seller',
   },
   {
-    id: 2, name: 'Leather Watch', description: 'Handcrafted genuine leather', price: 189.00,
-    category: 'accessories', image: 'https://images.unsplash.com/photo-1524592094714-0f0654e20314?w=400',
-    rating: 4.6, reviews: 834, inStock: true, badge: 'New',
+    id: 2,
+    name: 'Leather Watch',
+    description: 'Handcrafted genuine leather',
+    price: 189.0,
+    category: 'accessories',
+    image: 'https://images.unsplash.com/photo-1524592094714-0f0654e20314?w=400',
+    rating: 4.6,
+    reviews: 834,
+    inStock: true,
+    badge: 'New',
   },
 ];
 
