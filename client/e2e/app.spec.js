@@ -108,7 +108,7 @@ test.describe('[E2E] ShopSmart App – Categories', () => {
   test('renders category chips', async ({ page }) => {
     await page.goto('/');
     await expect(page.locator('#category-all')).toBeVisible({ timeout: 5000 });
-    await expect(page.getByText('Electronics')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('#category-electronics')).toBeVisible({ timeout: 5000 });
   });
 });
 
