@@ -310,7 +310,7 @@ function App() {
       {/* Hero */}
       <section className="hero" id="hero">
         <h1>
-          Discover <span className="gradient-text">Premium</span> Products
+          Discover <span className="gradient-text">Premium</span> Product
         </h1>
         <p>Curated collection of the finest products, handpicked for quality and style.</p>
       </section>
@@ -375,12 +375,12 @@ function App() {
           {loading
             ? Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)
             : products.map((product) => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  onAddToCart={addToCart}
-                />
-              ))
+              <ProductCard
+                key={product.id}
+                product={product}
+                onAddToCart={addToCart}
+              />
+            ))
           }
         </div>
       </section>
