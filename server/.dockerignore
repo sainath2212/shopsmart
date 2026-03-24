@@ -1,0 +1,25 @@
+# Dependency directories
+node_modules/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Git and Docker
+.git
+.dockerignore
+Dockerfile
+
+# Testing and Code Coverage
+coverage/
+tests/
+jest.*.config.js
+
+# Env variables
+.env
+.env.test
+
+# Linting and Formatting
+.eslint*
+.prettier*
