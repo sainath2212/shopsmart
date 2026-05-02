@@ -10,7 +10,6 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.0"
     }
-  }
   # Local state will be persisted across CI runs using GitHub Actions Cache
 }
 
