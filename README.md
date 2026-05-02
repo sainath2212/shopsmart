@@ -1,43 +1,70 @@
 # ShopSmart
 
-[![Backend CI](https://github.com/sainath2212/shopsmart/actions/workflows/backend-ci.yml/badge.svg)](https://github.com/sainath2212/shopsmart/actions/workflows/backend-ci.yml)
-[![Frontend CI](https://github.com/sainath2212/shopsmart/actions/workflows/frontend-ci.yml/badge.svg)](https://github.com/sainath2212/shopsmart/actions/workflows/frontend-ci.yml)
+[![CI/CD Pipeline](https://github.com/sainath2212/shopsmart/actions/workflows/deploy-pipeline.yml/badge.svg)](https://github.com/sainath2212/shopsmart/actions/workflows/deploy-pipeline.yml)
 
-A modern, full-stack e-commerce platform built with React and Express.js, featuring a comprehensive CI/CD pipeline, multi-tier testing strategy, and automated deployment to AWS EC2.
+A modern, cloud-native e-commerce platform built with React and Express.js, featuring a robust multi-stage CI/CD pipeline, Infrastructure as Code (IaC), containerization, and automated dual-deployment to AWS ECS (Fargate) and AWS EKS (Kubernetes).
 
 ---
 
 ## Overview
 
-ShopSmart is a production-grade web application that demonstrates industry-standard development practices across the full software lifecycle: clean code, automated testing, continuous integration, security auditing, and deployment automation.
+ShopSmart is a production-grade web application demonstrating industry-standard development and DevOps practices across the full software lifecycle. It emphasizes highly-available cloud architecture, automated testing, container orchestration, and seamless continuous deployment.
 
 ### Key Features
 
-- **Product Catalog** -- Browse, search, filter by category, and sort products with a responsive grid layout.
-- **Shopping Cart** -- Add items, adjust quantities, remove products, and view real-time subtotals via a slide-out cart drawer.
-- **RESTful API** -- Fully documented endpoints for products, categories, and cart operations with auto-generated Swagger/OpenAPI specifications.
-- **Multi-Tier Testing** -- Unit, integration, and end-to-end tests for both frontend and backend.
-- **CI/CD Automation** -- GitHub Actions pipelines that lint, test, audit, build, and deploy on every push and pull request.
-- **Dependency Management** -- Dependabot configured for automated weekly dependency updates.
+- **Product Catalog** — Browse, search, filter by category, and sort products with a responsive grid layout.
+- **Shopping Cart** — Add items, adjust quantities, remove products, and view real-time subtotals via a slide-out cart drawer.
+- **RESTful API** — Fully documented endpoints for products, categories, and cart operations with auto-generated Swagger/OpenAPI specifications.
+- **Multi-Tier Testing** — Unit, integration, and end-to-end tests for both frontend and backend.
+- **Infrastructure as Code (IaC)** — Automated, idempotent provisioning of AWS infrastructure using Terraform.
+- **Cloud-Native Deployment** — Multi-stage Docker builds seamlessly orchestrated across AWS Elastic Container Service (ECS Fargate) and Elastic Kubernetes Service (EKS).
 
 ---
 
 ## Technology Stack
 
-| Layer        | Technologies                                                   |
-|--------------|----------------------------------------------------------------|
-| **Frontend** | React 18, Vite 5, Vitest, Testing Library, Playwright          |
-| **Backend**  | Node.js, Express 4, Jest, Supertest, Swagger/OpenAPI           |
-| **DevOps**   | GitHub Actions, Dependabot, ESLint, Prettier                   |
-| **Deploy**   | AWS EC2 via SSH, PM2 process manager                           |
+| Layer | Technologies |
+| --- | --- |
+| **Frontend** | React 18, Vite 5, Vitest, Testing Library, Playwright |
+| **Backend** | Node.js, Express 4, Jest, Supertest, Swagger/OpenAPI |
+| **Containerization** | Docker, Multi-stage Builds, Amazon ECR |
+| **Orchestration** | Kubernetes (K8s), AWS ECS (Fargate), AWS EKS |
+| **Infrastructure (IaC)** | Terraform, AWS VPC, ALB, NAT Gateways, S3 |
+| **CI/CD & DevOps** | GitHub Actions, Dependabot, ESLint, Prettier |
+
+---
+
+## Architecture & Infrastructure
+
+The application operates within a highly available, secure AWS environment completely managed via Terraform:
+
+- **Network:** Custom VPC spanning multiple availability zones, utilizing Public Subnets (for ALB/NAT) and Private Subnets (for ECS/EKS compute instances).
+- **Compute:** Dual-deployment strategy:
+  - **Serverless Compute:** AWS ECS running on AWS Fargate.
+  - **Managed Kubernetes:** AWS EKS cluster running managed node groups.
+- **Traffic Routing:** Application Load Balancer (ALB) securely routes HTTP traffic to the appropriate backend or frontend target groups.
+- **Artifacts & State:** Terraform state is managed locally via GitHub Actions cache, with Docker images securely stored in Amazon ECR.
+
+---
+
+## CI/CD Pipeline
+
+The project utilizes a unified, multi-phase GitHub Actions workflow (`deploy-pipeline.yml`) that triggers on every push to the `main` branch:
+
+| Phase | Description |
+| --- | --- |
+| **1. Test & Validate** | Parallel execution of frontend/backend linters, security audits, unit tests, integration tests, and Playwright E2E suites. |
+| **2. Infrastructure Provisioning** | Executes `terraform apply` to provision or update the AWS VPC, ECR, ECS, EKS, and ALB resources. |
+| **3. Container Build & Push** | Builds optimized multi-stage Docker images for the frontend and backend, tagging them via Git SHA, and pushing to Amazon ECR. |
+| **4. Orchestration & Deployment** | Dynamically updates Kubernetes manifests and ECS service definitions, rolling out the new images with zero-downtime updates and automated health verification. |
 
 ---
 
 ## Getting Started
 
-Refer to [RUN_INSTRUCTIONS.md](RUN_INSTRUCTIONS.md) for complete setup, execution, and testing documentation.
+Refer to [RUN_INSTRUCTIONS.md](RUN_INSTRUCTIONS.md) for complete local setup, execution, and testing documentation.
 
-### Quick Start
+### Quick Start (Local Development)
 
 ```bash
 # Automated setup (idempotent)
@@ -56,74 +83,32 @@ cd client && npm run dev
 
 ---
 
-## Testing
-
-### Backend (Jest + Supertest)
-
-```bash
-cd server
-npm run test:unit         # 29 unit tests
-npm run test:integration  # 16 integration tests
-npm run test:e2e          # 12 end-to-end tests
-npm run test:all          # Run all tiers
-```
-
-### Frontend (Vitest + Playwright)
-
-```bash
-cd client
-npm run test:unit         # 9 unit tests
-npm run test:integration  # 8 integration tests
-npm run test:e2e          # 26 Playwright browser tests (Chromium + Firefox)
-```
-
-### Linting
-
-```bash
-cd server && npm run lint   # Backend ESLint
-cd client && npm run lint   # Frontend ESLint
-```
-
----
-
-## CI/CD Pipeline
-
-| Workflow         | Trigger                  | Stages                                                     |
-|------------------|--------------------------|-------------------------------------------------------------|
-| **Backend CI**   | Push/PR to `main`        | Lint, Unit Tests, Integration Tests, E2E, Swagger Validation, Security Audit, Build |
-| **Frontend CI**  | Push/PR to `main`        | Lint, Unit Tests, Integration Tests, Security Audit, Build, Playwright E2E |
-| **Deploy to EC2**| Push to `main` (manual)  | SSH, Git Pull, Install, Build, PM2 Restart, Health Check    |
-
-Pull requests automatically trigger lint checks and test suites. Failing checks block the merge.
-
----
-
 ## Project Structure
 
 ```
 shopsmart/
 ├── .github/
-│   ├── workflows/
-│   │   ├── backend-ci.yml         # Backend CI pipeline
-│   │   ├── frontend-ci.yml        # Frontend CI pipeline
-│   │   └── deploy-ec2.yml         # EC2 deployment workflow
-│   └── dependabot.yml             # Dependency update configuration
-├── client/                        # React frontend (Vite)
-│   ├── src/
-│   │   ├── App.jsx                # Main application component
-│   │   ├── index.css              # Design system and styles
-│   │   └── __tests__/             # Unit and integration tests
+│   └── workflows/
+│       ├── deploy-pipeline.yml    # Unified multi-stage CI/CD pipeline
+│       └── docker.yml             # Docker Hub image builds
+├── client/                        # React frontend
+│   ├── Dockerfile                 # Multi-stage frontend container config
+│   ├── src/                       # Application source
 │   └── e2e/                       # Playwright E2E tests
 ├── server/                        # Express backend
-│   ├── src/
-│   │   ├── app.js                 # Express application setup
-│   │   └── routes/                # API route handlers
+│   ├── Dockerfile                 # Multi-stage backend container config
+│   ├── src/                       # API handlers and logic
 │   └── tests/                     # Unit, integration, and E2E tests
-├── scripts/
-│   ├── setup.sh                   # Idempotent local setup
-│   ├── deploy.sh                  # Idempotent server deployment
-│   └── health-check.sh            # Idempotent health verification
-└── render.yaml                    # Render.com deployment config
+├── terraform/                     # Infrastructure as Code
+│   ├── main.tf                    # AWS Provider & State Config
+│   ├── vpc.tf                     # Network Topology
+│   ├── ecr.tf                     # Container Registries
+│   ├── ecs.tf                     # Fargate Cluster & ALB definitions
+│   └── eks.tf                     # Kubernetes Cluster & Node Groups
+└── k8s/                           # Kubernetes Manifests
+    ├── namespace.yaml
+    ├── backend-deployment.yaml
+    └── frontend-deployment.yaml
 ```
 
 ---
