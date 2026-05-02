@@ -80,7 +80,7 @@ resource "aws_security_group" "eks_nodes" {
 resource "aws_eks_cluster" "main" {
   name     = "${var.project_name}-eks"
   role_arn = data.aws_iam_role.lab_role.arn
-  version  = "1.29"
+  version  = "1.30"
 
   vpc_config {
     subnet_ids = concat(
