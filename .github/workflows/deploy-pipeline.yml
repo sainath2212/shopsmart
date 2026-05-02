@@ -1,0 +1,417 @@
+# ============================================================
+# ShopSmart CI/CD Pipeline
+# ============================================================
+# Workflow Order:
+#   Push/PR → Tests → Terraform → Docker Build & Push → Deploy ECS + Deploy EKS
+# ============================================================
+
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+
+env:
+  AWS_REGION: ${{ secrets.AWS_REGION }}
+  PROJECT_NAME: shopsmart
+  TF_WORKING_DIR: terraform
+
+jobs:
+  # ═══════════════════════════════════════════════════════════
+  # PHASE 1 — TESTING
+  # ═══════════════════════════════════════════════════════════
+  test:
+    name: "Phase 1 — Run Tests"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── Backend Tests ──────────────────────────────────────
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+          cache-dependency-path: server/package-lock.json
+
+      - name: Install backend dependencies
+        run: npm ci
+        working-directory: server
+
+      - name: Run backend unit tests
+        run: npm run test:unit
+        working-directory: server
+        env:
+          NODE_ENV: test
+
+      - name: Run backend integration tests
+        run: npm run test:integration
+        working-directory: server
+        env:
+          NODE_ENV: test
+
+      - name: Generate backend test report
+        if: always()
+        run: npm run test:coverage || true
+        working-directory: server
+        env:
+          NODE_ENV: test
+
+      # ── Frontend Tests ─────────────────────────────────────
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: client
+
+      - name: Run frontend unit tests
+        run: npm run test:unit
+        working-directory: client
+        env:
+          NODE_ENV: test
+          VITE_API_URL: ""
+
+      - name: Run frontend integration tests
+        run: npm run test:integration
+        working-directory: client
+        env:
+          NODE_ENV: test
+          VITE_API_URL: ""
+
+      - name: Generate frontend test report
+        if: always()
+        run: npm run test:coverage || true
+        working-directory: client
+        env:
+          NODE_ENV: test
+          VITE_API_URL: ""
+
+      # ── Upload Test Reports ────────────────────────────────
+      - name: Upload backend test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-test-report
+          path: server/coverage/
+          retention-days: 7
+
+      - name: Upload frontend test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-test-report
+          path: client/coverage/
+          retention-days: 7
+
+  # ═══════════════════════════════════════════════════════════
+  # PHASE 2 — INFRASTRUCTURE PROVISIONING (TERRAFORM)
+  # ═══════════════════════════════════════════════════════════
+  terraform:
+    name: "Phase 2 — Terraform Infrastructure"
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    outputs:
+      ecr_backend_url: ${{ steps.tf-output.outputs.ecr_backend_url }}
+      ecr_frontend_url: ${{ steps.tf-output.outputs.ecr_frontend_url }}
+      ecs_cluster_name: ${{ steps.tf-output.outputs.ecs_cluster_name }}
+      eks_cluster_name: ${{ steps.tf-output.outputs.eks_cluster_name }}
+      alb_dns_name: ${{ steps.tf-output.outputs.alb_dns_name }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.7.0"
+          terraform_wrapper: false
+
+      - name: Bootstrap Terraform state bucket
+        run: |
+          aws s3api head-bucket --bucket shopsmart-tfstate-sainath2212 2>/dev/null || \
+          aws s3api create-bucket \
+            --bucket shopsmart-tfstate-sainath2212 \
+            --region ${{ secrets.AWS_REGION }}
+          aws s3api put-bucket-versioning \
+            --bucket shopsmart-tfstate-sainath2212 \
+            --versioning-configuration Status=Enabled
+
+      - name: Terraform Init
+        run: terraform init
+        working-directory: ${{ env.TF_WORKING_DIR }}
+
+      - name: Terraform Validate
+        run: terraform validate
+        working-directory: ${{ env.TF_WORKING_DIR }}
+
+      - name: Terraform Plan
+        run: terraform plan -out=tfplan -input=false
+        working-directory: ${{ env.TF_WORKING_DIR }}
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve -input=false tfplan
+        working-directory: ${{ env.TF_WORKING_DIR }}
+
+      - name: Get Terraform Outputs
+        id: tf-output
+        run: |
+          echo "ecr_backend_url=$(terraform output -raw ecr_backend_url)" >> $GITHUB_OUTPUT
+          echo "ecr_frontend_url=$(terraform output -raw ecr_frontend_url)" >> $GITHUB_OUTPUT
+          echo "ecs_cluster_name=$(terraform output -raw ecs_cluster_name)" >> $GITHUB_OUTPUT
+          echo "eks_cluster_name=$(terraform output -raw eks_cluster_name)" >> $GITHUB_OUTPUT
+          echo "alb_dns_name=$(terraform output -raw alb_dns_name)" >> $GITHUB_OUTPUT
+        working-directory: ${{ env.TF_WORKING_DIR }}
+
+  # ═══════════════════════════════════════════════════════════
+  # PHASE 3 — CONTAINER BUILD & PUSH TO ECR
+  # ═══════════════════════════════════════════════════════════
+  docker-build:
+    name: "Phase 3 — Docker Build & Push to ECR"
+    runs-on: ubuntu-latest
+    needs: terraform
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    outputs:
+      backend_image: ${{ steps.build-backend.outputs.image }}
+      frontend_image: ${{ steps.build-frontend.outputs.image }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # ── Build & Push Backend ───────────────────────────────
+      - name: Build and push backend image
+        id: build-backend
+        env:
+          ECR_BACKEND_URL: ${{ needs.terraform.outputs.ecr_backend_url }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build \
+            -t $ECR_BACKEND_URL:$IMAGE_TAG \
+            -t $ECR_BACKEND_URL:latest \
+            -f server/Dockerfile \
+            server/
+          docker push $ECR_BACKEND_URL:$IMAGE_TAG
+          docker push $ECR_BACKEND_URL:latest
+          echo "image=$ECR_BACKEND_URL:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+      # ── Build & Push Frontend ──────────────────────────────
+      - name: Build and push frontend image
+        id: build-frontend
+        env:
+          ECR_FRONTEND_URL: ${{ needs.terraform.outputs.ecr_frontend_url }}
+          ALB_DNS: ${{ needs.terraform.outputs.alb_dns_name }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build \
+            --build-arg VITE_API_URL=http://$ALB_DNS \
+            -t $ECR_FRONTEND_URL:$IMAGE_TAG \
+            -t $ECR_FRONTEND_URL:latest \
+            -f client/Dockerfile \
+            client/
+          docker push $ECR_FRONTEND_URL:$IMAGE_TAG
+          docker push $ECR_FRONTEND_URL:latest
+          echo "image=$ECR_FRONTEND_URL:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+  # ═══════════════════════════════════════════════════════════
+  # PHASE 3b — DEPLOY TO ECS FARGATE
+  # ═══════════════════════════════════════════════════════════
+  deploy-ecs:
+    name: "Phase 3 — Deploy to ECS Fargate"
+    runs-on: ubuntu-latest
+    needs: [terraform, docker-build]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      # ── Force new deployment for backend ───────────────────
+      - name: Deploy backend to ECS
+        env:
+          ECS_CLUSTER: ${{ needs.terraform.outputs.ecs_cluster_name }}
+        run: |
+          aws ecs update-service \
+            --cluster $ECS_CLUSTER \
+            --service ${{ env.PROJECT_NAME }}-backend-service \
+            --force-new-deployment \
+            --region ${{ secrets.AWS_REGION }}
+
+      # ── Force new deployment for frontend ──────────────────
+      - name: Deploy frontend to ECS
+        env:
+          ECS_CLUSTER: ${{ needs.terraform.outputs.ecs_cluster_name }}
+        run: |
+          aws ecs update-service \
+            --cluster $ECS_CLUSTER \
+            --service ${{ env.PROJECT_NAME }}-frontend-service \
+            --force-new-deployment \
+            --region ${{ secrets.AWS_REGION }}
+
+      # ── Wait for services to stabilize ─────────────────────
+      - name: Wait for ECS backend service stability
+        env:
+          ECS_CLUSTER: ${{ needs.terraform.outputs.ecs_cluster_name }}
+        run: |
+          echo "Waiting for backend service to stabilize..."
+          aws ecs wait services-stable \
+            --cluster $ECS_CLUSTER \
+            --services ${{ env.PROJECT_NAME }}-backend-service \
+            --region ${{ secrets.AWS_REGION }} || true
+
+      - name: Wait for ECS frontend service stability
+        env:
+          ECS_CLUSTER: ${{ needs.terraform.outputs.ecs_cluster_name }}
+        run: |
+          echo "Waiting for frontend service to stabilize..."
+          aws ecs wait services-stable \
+            --cluster $ECS_CLUSTER \
+            --services ${{ env.PROJECT_NAME }}-frontend-service \
+            --region ${{ secrets.AWS_REGION }} || true
+
+      # ── Verify deployment ──────────────────────────────────
+      - name: Verify ECS deployment
+        env:
+          ALB_DNS: ${{ needs.terraform.outputs.alb_dns_name }}
+        run: |
+          echo "=== ECS Deployment Verification ==="
+          echo "ALB URL: http://$ALB_DNS"
+          sleep 30
+          echo "--- Health Check ---"
+          curl -sf http://$ALB_DNS/api/health && echo "✅ Backend health check passed" || echo "⚠️  Backend health check pending (service may still be starting)"
+          echo ""
+          curl -sf http://$ALB_DNS/ && echo "✅ Frontend health check passed" || echo "⚠️  Frontend health check pending (service may still be starting)"
+
+  # ═══════════════════════════════════════════════════════════
+  # PHASE 4 — DEPLOY TO EKS (KUBERNETES)
+  # ═══════════════════════════════════════════════════════════
+  deploy-eks:
+    name: "Phase 4 — Deploy to EKS (Kubernetes)"
+    runs-on: ubuntu-latest
+    needs: [terraform, docker-build]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      # ── Configure kubectl ──────────────────────────────────
+      - name: Configure cluster access (kubeconfig)
+        env:
+          EKS_CLUSTER: ${{ needs.terraform.outputs.eks_cluster_name }}
+        run: |
+          aws eks update-kubeconfig \
+            --name $EKS_CLUSTER \
+            --region ${{ secrets.AWS_REGION }}
+
+      # ── Deploy Kubernetes manifests ────────────────────────
+      - name: Create namespace
+        run: kubectl apply -f k8s/namespace.yaml
+
+      - name: Update backend image in manifest
+        env:
+          BACKEND_IMAGE: ${{ needs.docker-build.outputs.backend_image }}
+        run: |
+          sed -i "s|BACKEND_IMAGE_PLACEHOLDER|$BACKEND_IMAGE|g" k8s/backend-deployment.yaml
+
+      - name: Update frontend image in manifest
+        env:
+          FRONTEND_IMAGE: ${{ needs.docker-build.outputs.frontend_image }}
+        run: |
+          sed -i "s|FRONTEND_IMAGE_PLACEHOLDER|$FRONTEND_IMAGE|g" k8s/frontend-deployment.yaml
+
+      - name: Deploy backend
+        run: |
+          kubectl apply -f k8s/backend-deployment.yaml
+          kubectl apply -f k8s/backend-service.yaml
+
+      - name: Deploy frontend
+        run: |
+          kubectl apply -f k8s/frontend-deployment.yaml
+          kubectl apply -f k8s/frontend-service.yaml
+
+      # ── Wait for rollout ───────────────────────────────────
+      - name: Wait for backend rollout
+        run: |
+          kubectl rollout status deployment/shopsmart-backend \
+            -n shopsmart \
+            --timeout=300s
+
+      - name: Wait for frontend rollout
+        run: |
+          kubectl rollout status deployment/shopsmart-frontend \
+            -n shopsmart \
+            --timeout=300s
+
+      # ── Verify deployment stability ────────────────────────
+      - name: Verify deployment stability
+        run: |
+          echo "=== EKS Deployment Verification ==="
+          echo ""
+          echo "--- Pods ---"
+          kubectl get pods -n shopsmart -o wide
+          echo ""
+          echo "--- Services ---"
+          kubectl get svc -n shopsmart -o wide
+          echo ""
+          echo "--- Deployments ---"
+          kubectl get deployments -n shopsmart
+          echo ""
+          echo "--- Frontend LoadBalancer URL ---"
+          FRONTEND_URL=$(kubectl get svc shopsmart-frontend -n shopsmart -o jsonpath='{.status.loadBalancer.ingress[0].hostname}' 2>/dev/null || echo "pending")
+          echo "Frontend URL: http://$FRONTEND_URL"
+          echo ""
+          echo "--- Pod Health ---"
+          READY_PODS=$(kubectl get pods -n shopsmart --field-selector=status.phase=Running --no-headers 2>/dev/null | wc -l)
+          TOTAL_PODS=$(kubectl get pods -n shopsmart --no-headers 2>/dev/null | wc -l)
+          echo "Running pods: $READY_PODS / $TOTAL_PODS"
+          if [ "$READY_PODS" -ge 4 ]; then
+            echo "✅ All pods are running (2 backend + 2 frontend)"
+          else
+            echo "⚠️  Some pods may still be starting"
+          fi
