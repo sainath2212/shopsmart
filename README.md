@@ -18,7 +18,7 @@ ShopSmart is a production-grade web application that demonstrates industry-stand
 - **RESTful API** -- Fully documented endpoints for products, categories, and cart operations with auto-generated Swagger/OpenAPI specifications.
 - **Multi-Tier Testing** -- Unit, integration, and end-to-end tests for both frontend and backend.
 - **CI/CD Automation** -- GitHub Actions pipelines that lint, test, audit, build, and deploy on every push and pull request.
-- **Dependency Management** -- Dependabot configured for automated weekly dependency updates .
+- **Dependency Management** -- Dependabot configured for automated weekly dependency updates.
 
 ---
 
