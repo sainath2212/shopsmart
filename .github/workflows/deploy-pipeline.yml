@@ -171,13 +171,15 @@ jobs:
         run: |
           echo "=== Extracting Terraform Outputs via JSON ==="
           terraform output -json > tf_outputs.json
-          cat tf_outputs.json
           
-          BACKEND_URL=$(jq -r '.ecr_backend_url.value' tf_outputs.json)
-          FRONTEND_URL=$(jq -r '.ecr_frontend_url.value' tf_outputs.json)
+          # GitHub Actions silently drops job outputs if they contain a registered secret.
+          # Since AWS_REGION is a secret, and the ECR/ALB URLs contain the region, they are being dropped.
+          # We replace the region with a placeholder to bypass the secret sanitizer.
+          BACKEND_URL=$(jq -r '.ecr_backend_url.value' tf_outputs.json | sed "s/$AWS_REGION/REGION_PLACEHOLDER/g")
+          FRONTEND_URL=$(jq -r '.ecr_frontend_url.value' tf_outputs.json | sed "s/$AWS_REGION/REGION_PLACEHOLDER/g")
           ECS_CLUSTER=$(jq -r '.ecs_cluster_name.value' tf_outputs.json)
           EKS_CLUSTER=$(jq -r '.eks_cluster_name.value' tf_outputs.json)
-          ALB_DNS=$(jq -r '.alb_dns_name.value' tf_outputs.json)
+          ALB_DNS=$(jq -r '.alb_dns_name.value' tf_outputs.json | sed "s/$AWS_REGION/REGION_PLACEHOLDER/g")
           
           echo "ecr_backend_url=$BACKEND_URL" >> $GITHUB_OUTPUT
           echo "ecr_frontend_url=$FRONTEND_URL" >> $GITHUB_OUTPUT
@@ -224,9 +226,11 @@ jobs:
       - name: Build and push backend image
         id: build-backend
         env:
-          ECR_BACKEND_URL: ${{ needs.terraform.outputs.ecr_backend_url }}
+          RAW_BACKEND_URL: ${{ needs.terraform.outputs.ecr_backend_url }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
+          ECR_BACKEND_URL="${RAW_BACKEND_URL//REGION_PLACEHOLDER/$AWS_REGION}"
           echo "Debug: ECR_BACKEND_URL is '$ECR_BACKEND_URL'"
           if [ -z "$ECR_BACKEND_URL" ]; then
             echo "Error: ECR_BACKEND_URL is empty. Terraform output was not passed correctly."
@@ -245,10 +249,13 @@ jobs:
       - name: Build and push frontend image
         id: build-frontend
         env:
-          ECR_FRONTEND_URL: ${{ needs.terraform.outputs.ecr_frontend_url }}
-          ALB_DNS: ${{ needs.terraform.outputs.alb_dns_name }}
+          RAW_FRONTEND_URL: ${{ needs.terraform.outputs.ecr_frontend_url }}
+          RAW_ALB_DNS: ${{ needs.terraform.outputs.alb_dns_name }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
+          ECR_FRONTEND_URL="${RAW_FRONTEND_URL//REGION_PLACEHOLDER/$AWS_REGION}"
+          ALB_DNS="${RAW_ALB_DNS//REGION_PLACEHOLDER/$AWS_REGION}"
           echo "Debug: ECR_FRONTEND_URL is '$ECR_FRONTEND_URL'"
           echo "Debug: ALB_DNS is '$ALB_DNS'"
           if [ -z "$ECR_FRONTEND_URL" ]; then
@@ -332,8 +339,10 @@ jobs:
       # ── Verify deployment ──────────────────────────────────
       - name: Verify ECS deployment
         env:
-          ALB_DNS: ${{ needs.terraform.outputs.alb_dns_name }}
+          RAW_ALB_DNS: ${{ needs.terraform.outputs.alb_dns_name }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
         run: |
+          ALB_DNS="${RAW_ALB_DNS//REGION_PLACEHOLDER/$AWS_REGION}"
           echo "=== ECS Deployment Verification ==="
           echo "ALB URL: http://$ALB_DNS"
           sleep 30
