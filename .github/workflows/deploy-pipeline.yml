@@ -387,14 +387,22 @@ jobs:
 
       - name: Update backend image in manifest
         env:
-          BACKEND_IMAGE: ${{ needs.docker-build.outputs.backend_image }}
+          RAW_BACKEND_URL: ${{ needs.terraform.outputs.ecr_backend_url }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          IMAGE_TAG: ${{ github.sha }}
         run: |
+          ECR_BACKEND_URL="${RAW_BACKEND_URL//REGION_PLACEHOLDER/$AWS_REGION}"
+          BACKEND_IMAGE="$ECR_BACKEND_URL:$IMAGE_TAG"
           sed -i "s|BACKEND_IMAGE_PLACEHOLDER|$BACKEND_IMAGE|g" k8s/backend-deployment.yaml
 
       - name: Update frontend image in manifest
         env:
-          FRONTEND_IMAGE: ${{ needs.docker-build.outputs.frontend_image }}
+          RAW_FRONTEND_URL: ${{ needs.terraform.outputs.ecr_frontend_url }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          IMAGE_TAG: ${{ github.sha }}
         run: |
+          ECR_FRONTEND_URL="${RAW_FRONTEND_URL//REGION_PLACEHOLDER/$AWS_REGION}"
+          FRONTEND_IMAGE="$ECR_FRONTEND_URL:$IMAGE_TAG"
           sed -i "s|FRONTEND_IMAGE_PLACEHOLDER|$FRONTEND_IMAGE|g" k8s/frontend-deployment.yaml
 
       - name: Deploy backend
