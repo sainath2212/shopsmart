@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: shopsmart-backend
+  namespace: shopsmart
+  labels:
+    app: shopsmart-backend
+    component: backend
+    app.kubernetes.io/name: shopsmart-backend
+    app.kubernetes.io/part-of: shopsmart
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: shopsmart-backend
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: shopsmart-backend
+        component: backend
+    spec:
+      containers:
+        - name: backend
+          image: BACKEND_IMAGE_PLACEHOLDER
+          ports:
+            - containerPort: 5001
+              protocol: TCP
+          env:
+            - name: PORT
+              value: "5001"
+            - name: NODE_ENV
+              value: "production"
+          # ── Resource Limits (rubric requirement) ──────────
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "250m"
+          # ── Liveness Probe (rubric requirement) ──────────
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 5001
+            initialDelaySeconds: 15
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          # ── Readiness Probe (rubric requirement) ─────────
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 5001
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+      restartPolicy: Always

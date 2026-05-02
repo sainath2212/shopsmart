@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: shopsmart-frontend
+  namespace: shopsmart
+  labels:
+    app: shopsmart-frontend
+    component: frontend
+    app.kubernetes.io/name: shopsmart-frontend
+    app.kubernetes.io/part-of: shopsmart
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: shopsmart-frontend
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: shopsmart-frontend
+        component: frontend
+    spec:
+      containers:
+        - name: frontend
+          image: FRONTEND_IMAGE_PLACEHOLDER
+          ports:
+            - containerPort: 80
+              protocol: TCP
+          # ── Resource Limits (rubric requirement) ──────────
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "50m"
+            limits:
+              memory: "128Mi"
+              cpu: "150m"
+          # ── Liveness Probe (rubric requirement) ──────────
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          # ── Readiness Probe (rubric requirement) ─────────
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+      restartPolicy: Always
