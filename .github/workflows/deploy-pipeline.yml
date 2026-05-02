@@ -215,6 +215,11 @@ jobs:
           ECR_BACKEND_URL: ${{ needs.terraform.outputs.ecr_backend_url }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
+          echo "Debug: ECR_BACKEND_URL is '$ECR_BACKEND_URL'"
+          if [ -z "$ECR_BACKEND_URL" ]; then
+            echo "Error: ECR_BACKEND_URL is empty. Terraform output was not passed correctly."
+            exit 1
+          fi
           docker build \
             -t $ECR_BACKEND_URL:$IMAGE_TAG \
             -t $ECR_BACKEND_URL:latest \
@@ -232,6 +237,12 @@ jobs:
           ALB_DNS: ${{ needs.terraform.outputs.alb_dns_name }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
+          echo "Debug: ECR_FRONTEND_URL is '$ECR_FRONTEND_URL'"
+          echo "Debug: ALB_DNS is '$ALB_DNS'"
+          if [ -z "$ECR_FRONTEND_URL" ]; then
+            echo "Error: ECR_FRONTEND_URL is empty. Terraform output was not passed correctly."
+            exit 1
+          fi
           docker build \
             --build-arg VITE_API_URL=http://$ALB_DNS \
             -t $ECR_FRONTEND_URL:$IMAGE_TAG \
