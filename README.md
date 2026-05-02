@@ -1,6 +1,10 @@
 # ShopSmart
 
 [![CI/CD Pipeline](https://github.com/sainath2212/shopsmart/actions/workflows/deploy-pipeline.yml/badge.svg)](https://github.com/sainath2212/shopsmart/actions/workflows/deploy-pipeline.yml)
+[![Backend CI](https://github.com/sainath2212/shopsmart/actions/workflows/backend-ci.yml/badge.svg)](https://github.com/sainath2212/shopsmart/actions/workflows/backend-ci.yml)
+[![Frontend CI](https://github.com/sainath2212/shopsmart/actions/workflows/frontend-ci.yml/badge.svg)](https://github.com/sainath2212/shopsmart/actions/workflows/frontend-ci.yml)
+[![Docker Hub Build](https://github.com/sainath2212/shopsmart/actions/workflows/docker.yml/badge.svg)](https://github.com/sainath2212/shopsmart/actions/workflows/docker.yml)
+[![EC2 Deploy](https://github.com/sainath2212/shopsmart/actions/workflows/deploy-ec2.yml/badge.svg)](https://github.com/sainath2212/shopsmart/actions/workflows/deploy-ec2.yml)
 
 A modern, cloud-native e-commerce platform built with React and Express.js, featuring a robust multi-stage CI/CD pipeline, Infrastructure as Code (IaC), containerization, and automated dual-deployment to AWS ECS (Fargate) and AWS EKS (Kubernetes).
 
