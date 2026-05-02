@@ -10,7 +10,15 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.0"
     }
-  # Local state will be persisted across CI runs using GitHub Actions Cache
+  }
+
+  # Remote state backend — persists state across CI runs
+  # The state bucket is created by the pipeline bootstrap step
+  backend "s3" {
+    bucket = "shopsmart-tfstate-sainath2212"
+    key    = "terraform.tfstate"
+    region = "us-east-1"
+  }
 }
 
 provider "aws" {

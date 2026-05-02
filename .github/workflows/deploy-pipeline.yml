@@ -140,16 +140,15 @@ jobs:
           terraform_version: "1.7.0"
           terraform_wrapper: false
 
-      - name: Cache Terraform State
-        uses: actions/cache@v3
-        with:
-          path: |
-            ${{ env.TF_WORKING_DIR }}/.terraform
-            ${{ env.TF_WORKING_DIR }}/terraform.tfstate
-            ${{ env.TF_WORKING_DIR }}/terraform.tfstate.backup
-          key: terraform-state-${{ github.ref_name }}-${{ github.run_id }}
-          restore-keys: |
-            terraform-state-${{ github.ref_name }}-
+      - name: Bootstrap Terraform state bucket
+        run: |
+          aws s3api head-bucket --bucket shopsmart-tfstate-sainath2212 2>/dev/null || \
+          aws s3api create-bucket \
+            --bucket shopsmart-tfstate-sainath2212 \
+            --region ${{ secrets.AWS_REGION }}
+          aws s3api put-bucket-versioning \
+            --bucket shopsmart-tfstate-sainath2212 \
+            --versioning-configuration Status=Enabled
 
       - name: Terraform Init
         run: terraform init
